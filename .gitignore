@@ -1,0 +1,23 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Datasets and training run outputs
+mnist_dataset/
+raw_mnist/
+runs/
+tests/dummy_dataset/
+tests/mnist_yolo_dataset/
+tests/runs/
+*.cache
+*.pt
+*.jpg
+*.png
+
+# IDE / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
