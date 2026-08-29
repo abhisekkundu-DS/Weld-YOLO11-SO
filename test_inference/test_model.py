@@ -69,11 +69,12 @@ def run_test_inference():
     print("-" * 70)
 
     total_detections = 0
-    CONF_THRESH = 0.05  # Set to 0.05 to ensure subtle welding defects get bounding boxes drawn
+    CONF_THRESH = 0.05  # Captures fine defects
+    INFERENCE_IMGSZ = 640  # Matches Roboflow training resolution
 
     for idx, img_path in enumerate(input_images, 1):
-        # Run YOLO prediction with conf=0.10
-        results = model.predict(source=str(img_path), conf=CONF_THRESH, imgsz=1024, verbose=False)
+        # Run YOLO prediction with imgsz=640 and augment=True for TTA boost
+        results = model.predict(source=str(img_path), conf=CONF_THRESH, imgsz=INFERENCE_IMGSZ, augment=True, verbose=False)
 
         for res in results:
             boxes = res.boxes

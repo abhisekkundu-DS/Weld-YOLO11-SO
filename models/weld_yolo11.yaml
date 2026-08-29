@@ -7,8 +7,8 @@ nc: 3
 
 names:
   0: Bad Weld
-  1: Good Weld
-  2: Defect
+  1: Defect
+  2: Good Weld
 
 scales:
   # Model compound scaling constants [depth, width, max_channels]
