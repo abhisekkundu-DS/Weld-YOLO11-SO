@@ -48,4 +48,35 @@ def register_custom_modules():
                     modules.__all__ = list(modules.__all__)
                 modules.__all__.append(name)
 
-    print("Successfully registered Weld-YOLO11-SO custom modules with Ultralytics framework.")
+    # 3. Patch installed ultralytics/nn/tasks.py so parse_model treats custom modules as base_modules
+    import ultralytics
+    ultra_path = pathlib.Path(ultralytics.__file__).parent
+    tasks_path = ultra_path / "nn" / "tasks.py"
+    
+    if tasks_path.exists():
+        content_tasks = tasks_path.read_text(encoding="utf-8")
+        if "WaveletBlock" not in content_tasks:
+            import_stmt = (
+                "\n# Custom Weld-YOLO11-SO Modules\n"
+                "from models.modules.wavelet import WaveletBlock\n"
+                "from models.modules.weldsimam import WeldSimAM\n"
+                "from models.modules.dysample import DySample\n"
+                "from models.modules.ahsfpn import AHSFPN\n"
+            )
+            if "from __future__ import annotations" in content_tasks:
+                content_tasks = content_tasks.replace(
+                    "from __future__ import annotations",
+                    "from __future__ import annotations\n" + import_stmt
+                )
+            else:
+                content_tasks = import_stmt + content_tasks
+
+            content_tasks = content_tasks.replace(
+                "base_modules = frozenset(\n        {",
+                "base_modules = frozenset(\n        {\n            WaveletBlock,\n            WeldSimAM,\n            DySample,\n            AHSFPN,"
+            )
+            tasks_path.write_text(content_tasks, encoding="utf-8")
+            import importlib
+            importlib.reload(tasks)
+
+    print("Successfully registered and patched Weld-YOLO11-SO custom modules with Ultralytics framework.")
