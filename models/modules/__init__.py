@@ -17,8 +17,16 @@ def register_custom_modules():
     Registers custom Weld-YOLO11-SO modules with the installed Ultralytics package
     so that YOLO("models/weld_yolo11.yaml") can dynamically parse and build the model.
     """
-    import ultralytics.nn.tasks as tasks
-    import ultralytics.nn.modules as modules
+    try:
+        import ultralytics.nn.tasks as tasks
+        import ultralytics.nn.modules as modules
+    except ModuleNotFoundError:
+        import sys
+        import subprocess
+        print("Ultralytics package not detected. Installing dependencies...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "ultralytics", "PyWavelets", "opencv-python"])
+        import ultralytics.nn.tasks as tasks
+        import ultralytics.nn.modules as modules
 
     custom_classes = {
         "WaveletBlock": WaveletBlock,
