@@ -101,7 +101,37 @@ class WaveletBlock(nn.Module):
         # Channel projection layer if c2 != c1
         self.proj = nn.Conv2d(c1, c2, kernel_size=1, bias=False) if c2 != c1 else nn.Identity()
 
+    def _check_and_reinit(self, x):
+        in_c = x.shape[1]
+        if in_c != self.c1:
+            self.c1 = in_c
+            device, dtype = x.device, x.dtype
+            self.high_freq_conv = nn.Sequential(
+                nn.Conv2d(in_c * 3, in_c * 3, kernel_size=3, padding=1, groups=in_c, bias=False),
+                nn.BatchNorm2d(in_c * 3),
+                nn.SiLU(inplace=True),
+                nn.Conv2d(in_c * 3, in_c * 3, kernel_size=1, bias=False),
+                nn.BatchNorm2d(in_c * 3),
+                nn.SiLU(inplace=True)
+            ).to(device=device, dtype=dtype)
+
+            self.freq_attn = nn.Sequential(
+                nn.AdaptiveAvgPool2d(1),
+                nn.Conv2d(in_c * 3, max(in_c // 4, 16), kernel_size=1, bias=False),
+                nn.SiLU(inplace=True),
+                nn.Conv2d(max(in_c // 4, 16), in_c * 3, kernel_size=1, bias=False),
+                nn.Sigmoid()
+            ).to(device=device, dtype=dtype)
+
+            if self.c2 != self.c1 and self.c2 is not None:
+                self.proj = nn.Conv2d(self.c1, self.c2, kernel_size=1, bias=False).to(device=device, dtype=dtype)
+            else:
+                self.proj = nn.Identity()
+
     def forward(self, x):
+        # Auto-adapt channels if mismatch occurs due to YOLO width scaling
+        self._check_and_reinit(x)
+
         # 1. 2D Haar Discrete Wavelet Transform
         LL, LH, HL, HH, orig_shape = haar_dwt2d(x)
 

@@ -47,7 +47,24 @@ class DySample(nn.Module):
         base_grid = torch.stack([grid_x, grid_y], dim=-1).unsqueeze(0).repeat(B, 1, 1, 1) # [B, H, W, 2]
         return base_grid
 
+    def _check_and_reinit(self, x):
+        in_c = x.shape[1]
+        if in_c != self.c1:
+            self.c1 = in_c
+            device, dtype = x.device, x.dtype
+            self.offset_conv = nn.Sequential(
+                nn.Conv2d(in_c, in_c // 4 if in_c >= 16 else in_c, kernel_size=3, padding=1, groups=max(1, in_c // 4 if in_c >= 16 else in_c), bias=False),
+                nn.BatchNorm2d(in_c // 4 if in_c >= 16 else in_c),
+                nn.SiLU(inplace=True),
+                nn.Conv2d(in_c // 4 if in_c >= 16 else in_c, self.offset_dim, kernel_size=1, bias=False)
+            ).to(device=device, dtype=dtype)
+            if self.c2 != self.c1 and self.c2 is not None:
+                self.proj = nn.Conv2d(self.c1, self.c2, kernel_size=1, bias=False).to(device=device, dtype=dtype)
+            else:
+                self.proj = nn.Identity()
+
     def forward(self, x):
+        self._check_and_reinit(x)
         B, C, H, W = x.shape
         scale = self.scale
         out_H, out_W = H * scale, W * scale
