@@ -49,6 +49,8 @@ def register_custom_modules():
                 modules.__all__.append(name)
 
     # 3. Patch installed ultralytics/nn/tasks.py so parse_model treats custom modules as base_modules
+    import pathlib
+    import importlib
     import ultralytics
     ultra_path = pathlib.Path(ultralytics.__file__).parent
     tasks_path = ultra_path / "nn" / "tasks.py"
