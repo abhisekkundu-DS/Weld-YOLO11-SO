@@ -65,12 +65,15 @@ def run_test_inference():
         print(f"   - {img.name}")
 
     print("\n3. Running Inference and Generating Output Images...")
+    print("   (Using Confidence Threshold: conf=0.10 to capture faint/subtle welding defects)")
     print("-" * 70)
 
     total_detections = 0
+    CONF_THRESH = 0.05  # Set to 0.05 to ensure subtle welding defects get bounding boxes drawn
+
     for idx, img_path in enumerate(input_images, 1):
-        # Run YOLO prediction
-        results = model.predict(source=str(img_path), conf=0.25, imgsz=1024, verbose=False)
+        # Run YOLO prediction with conf=0.10
+        results = model.predict(source=str(img_path), conf=CONF_THRESH, imgsz=1024, verbose=False)
 
         for res in results:
             boxes = res.boxes
